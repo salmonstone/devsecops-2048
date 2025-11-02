@@ -26,22 +26,37 @@ data "aws_vpc" "default" {
   default = true
 }
 
-# FIXED: Get ALL available subnets (not just public)
-data "aws_subnets" "available" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
+# CREATE MISSING SUBNETS FOR STOCKHOLM
+resource "aws_subnet" "eks_subnet_1" {
+  vpc_id            = data.aws_vpc.default.id
+  cidr_block        = "172.31.96.0/20"
+  availability_zone = "eu-north-1a"
+  
+  tags = {
+    Name = "eks-subnet-1a"
   }
 }
 
-#cluster provision
+resource "aws_subnet" "eks_subnet_2" {
+  vpc_id            = data.aws_vpc.default.id
+  cidr_block        = "172.31.112.0/20"
+  availability_zone = "eu-north-1b"
+  
+  tags = {
+    Name = "eks-subnet-1b"
+  }
+}
+
+# Use the custom subnets we created
 resource "aws_eks_cluster" "example" {
   name     = "EKS_CLUSTER"
   role_arn = aws_iam_role.example.arn
 
   vpc_config {
-    # FIXED: Use ALL available subnets instead of just public ones
-    subnet_ids = data.aws_subnets.available.ids
+    subnet_ids = [
+      aws_subnet.eks_subnet_1.id, 
+      aws_subnet.eks_subnet_2.id
+    ]
   }
 
   depends_on = [
@@ -84,8 +99,10 @@ resource "aws_eks_node_group" "example" {
   cluster_name    = aws_eks_cluster.example.name
   node_group_name = "Node-cloud"
   node_role_arn   = aws_iam_role.example1.arn
-  # FIXED: Use ALL available subnets
-  subnet_ids      = data.aws_subnets.available.ids
+  subnet_ids      = [
+    aws_subnet.eks_subnet_1.id, 
+    aws_subnet.eks_subnet_2.id
+  ]
 
   scaling_config {
     desired_size = 1
