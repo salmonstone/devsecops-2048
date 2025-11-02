@@ -31,6 +31,7 @@ resource "aws_subnet" "eks_subnet_1" {
   vpc_id            = data.aws_vpc.default.id
   cidr_block        = "172.31.96.0/20"
   availability_zone = "eu-north-1a"
+   map_public_ip_on_launch = true
   
   tags = {
     Name = "eks-subnet-1a"
@@ -41,6 +42,7 @@ resource "aws_subnet" "eks_subnet_2" {
   vpc_id            = data.aws_vpc.default.id
   cidr_block        = "172.31.112.0/20"
   availability_zone = "eu-north-1b"
+  map_public_ip_on_launch = true 
   
   tags = {
     Name = "eks-subnet-1b"
