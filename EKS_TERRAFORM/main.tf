@@ -1,3 +1,7 @@
+provider "aws" {
+  region = "ap-south-1"
+}
+
 data "aws_iam_policy_document" "assume_role" {
   statement {
     effect = "Allow"
@@ -21,17 +25,15 @@ resource "aws_iam_role_policy_attachment" "example-AmazonEKSClusterPolicy" {
   role       = aws_iam_role.example.name
 }
 
-#get vpc data
 data "aws_vpc" "default" {
   default = true
 }
 
-# CREATE MISSING SUBNETS FOR STOCKHOLM
 resource "aws_subnet" "eks_subnet_1" {
   vpc_id            = data.aws_vpc.default.id
   cidr_block        = "172.31.96.0/20"
-  availability_zone = "eu-north-1a"
-   map_public_ip_on_launch = true
+  availability_zone = "ap-south-1a"
+  map_public_ip_on_launch = true
   
   tags = {
     Name = "eks-subnet-1a"
@@ -41,7 +43,7 @@ resource "aws_subnet" "eks_subnet_1" {
 resource "aws_subnet" "eks_subnet_2" {
   vpc_id            = data.aws_vpc.default.id
   cidr_block        = "172.31.112.0/20"
-  availability_zone = "eu-north-1b"
+  availability_zone = "ap-south-1b"
   map_public_ip_on_launch = true 
   
   tags = {
@@ -49,7 +51,6 @@ resource "aws_subnet" "eks_subnet_2" {
   }
 }
 
-# Use the custom subnets we created
 resource "aws_eks_cluster" "example" {
   name     = "EKS_CLUSTER"
   role_arn = aws_iam_role.example.arn
@@ -96,7 +97,6 @@ resource "aws_iam_role_policy_attachment" "example-AmazonEC2ContainerRegistryRea
   role       = aws_iam_role.example1.name
 }
 
-#create node group
 resource "aws_eks_node_group" "example" {
   cluster_name    = aws_eks_cluster.example.name
   node_group_name = "Node-cloud"
@@ -111,6 +111,7 @@ resource "aws_eks_node_group" "example" {
     max_size     = 2
     min_size     = 1
   }
+
   instance_types = ["t3.large"]
 
   depends_on = [
